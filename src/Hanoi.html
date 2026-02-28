@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tower of Hanoi Visualiser</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1a2e;
+      color: #eee;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+      color: #a8d8ea;
+    }
+
+    /* ── Controls ── */
+    #controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+      background: #16213e;
+      border-radius: 12px;
+      padding: 16px 24px;
+      margin-bottom: 32px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ctrl-group label {
+      font-size: 0.75rem;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .ctrl-group .val {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #a8d8ea;
+    }
+
+    input[type="range"] {
+      width: 120px;
+      accent-color: #a8d8ea;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 10px 28px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.97); }
+
+    #startBtn {
+      background: #0f3460;
+      color: #a8d8ea;
+      border: 2px solid #a8d8ea;
+    }
+    #startBtn:hover:not(:disabled) { background: #a8d8ea; color: #0f3460; }
+    #startBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #resetBtn {
+      background: transparent;
+      color: #e94560;
+      border: 2px solid #e94560;
+    }
+    #resetBtn:hover:not(:disabled) { background: #e94560; color: #fff; }
+    #resetBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #moveCounter {
+      font-size: 0.95rem;
+      color: #f5a623;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* ── Board ── */
+    #board {
+      position: relative;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      width: 100%;
+      max-width: 700px;
+      height: 320px;
+      background: #16213e;
+      border-radius: 16px;
+      padding: 0 20px;
+      padding-bottom: 40px;
+    }
+
+    #board::after {
+      content: '';
+      position: absolute;
+      bottom: 34px;
+      left: 5%;
+      width: 90%;
+      height: 8px;
+      background: #0f3460;
+      border-radius: 4px;
+    }
+
+    .peg-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 180px;
+      height: 100%;
+    }
+
+    .rod {
+      position: absolute;
+      bottom: 0;
+      width: 8px;
+      height: 240px;
+      background: #0f3460;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .peg-label {
+      position: absolute;
+      bottom: -28px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #a8d8ea;
+      letter-spacing: 2px;
+    }
+
+    .disk {
+      position: absolute;
+      border-radius: 6px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: rgba(0,0,0,0.5);
+      will-change: transform;
+      z-index: 2;
+    }
+
+    #banner {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      color: #56e39f;
+      font-weight: bold;
+      letter-spacing: 1px;
+      min-height: 1.5em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Tower of Hanoi</h1>
+
+<div id="controls">
+  <div class="ctrl-group">
+    <label>Disks</label>
+    <span class="val" id="diskVal">3</span>
+    <input type="range" id="numDisks" min="2" max="8" value="3">
+  </div>
+  <div class="ctrl-group">
+    <label>Speed</label>
+    <span class="val" id="speedVal">3</span>
+    <input type="range" id="speed" min="1" max="5" value="3">
+  </div>
+  <button id="startBtn">▶ Start</button>
+  <button id="resetBtn">↺ Reset</button>
+  <span id="moveCounter">Move 0 of 0</span>
+</div>
+
+<div id="board">
+  <div class="peg-wrapper" id="peg-0"><div class="rod"></div><div class="peg-label">A</div></div>
+  <div class="peg-wrapper" id="peg-1"><div class="rod"></div><div class="peg-label">B</div></div>
+  <div class="peg-wrapper" id="peg-2"><div class="rod"></div><div class="peg-label">C</div></div>
+</div>
+
+<div id="banner"></div>
+
+<script>
+  const DISK_HEIGHT = 24;
+  const DISK_GAP    = 2;
+  const BASE_BOTTOM = 0;
+  const PHASE_DURATIONS = [700, 400, 220, 100, 40];
+
+  let pegs       = [[], [], []];
+  let diskCount  = 3;
+  let moves      = [];
+  let animating  = false;
+  let cancelFlag = false;
+
+  const board       = document.getElementById('board');
+  const startBtn    = document.getElementById('startBtn');
+  const resetBtn    = document.getElementById('resetBtn');
+  const counter     = document.getElementById('moveCounter');
+  const banner      = document.getElementById('banner');
+  const numDisksEl  = document.getElementById('numDisks');
+  const diskValEl   = document.getElementById('diskVal');
+  const speedEl     = document.getElementById('speed');
+  const speedValEl  = document.getElementById('speedVal');
+
+  function diskColor(size, total) {
+    const hue = Math.round((size / (total + 1)) * 300);
+    return `hsl(${hue}, 70%, 55%)`;
+  }
+
+  function diskWidth(size, total) {
+    const pegW = 180;
+    const minW = 32;
+    const maxW = pegW * 0.88;
+    return minW + ((size - 1) / Math.max(total - 1, 1)) * (maxW - minW);
+  }
+
+  function diskBottom(stackIndex) {
+    return BASE_BOTTOM + stackIndex * (DISK_HEIGHT + DISK_GAP);
+  }
+
+  function pegCentreX(pegIndex) {
+    const pegWrappers = board.querySelectorAll('.peg-wrapper');
+    const pegRect   = pegWrappers[pegIndex].getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
+    return pegRect.left + pegRect.width / 2 - boardRect.left;
+  }
+
+  function makeDiskEl(size, total) {
+    const el = document.createElement('div');
+    el.className = 'disk';
+    el.id = `disk-${size}`;
+    el.style.width  = diskWidth(size, total) + 'px';
+    el.style.background = diskColor(size, total);
+    el.style.left   = '0px';
+    el.style.bottom = '0px';
+    el.dataset.size = size;
+    return el;
+  }
+
+  function positionDisk(el, pegIndex, stackIndex) {
+    const size = parseInt(el.dataset.size);
+    const w    = diskWidth(size, diskCount);
+    const cx   = pegCentreX(pegIndex);
+    el.style.left   = (cx - w / 2) + 'px';
+    el.style.bottom = diskBottom(stackIndex) + 'px';
+  }
+
+  function initBoard() {
+    diskCount = parseInt(numDisksEl.value);
+    pegs = [[], [], []];
+    banner.textContent  = '';
+    counter.textContent = `Move 0 of 0`;
+
+    board.querySelectorAll('.disk').forEach(d => d.remove());
+
+    for (let i = diskCount; i >= 1; i--) {
+      pegs[0].push(i);
+    }
+
+    for (let stackIdx = 0; stackIdx < pegs[0].length; stackIdx++) {
+      const size = pegs[0][stackIdx];
+      const el   = makeDiskEl(size, diskCount);
+      board.appendChild(el);
+      positionDisk(el, 0, stackIdx);
+    }
+  }
+
+  function collectMoves(n, from, to, aux, list) {
+    if (n === 0) return;
+    collectMoves(n - 1, from, aux, to, list);
+    list.push({ from, to });
+    collectMoves(n - 1, aux, to, from, list);
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function animateMove(from, to) {
+    const duration = PHASE_DURATIONS[parseInt(speedEl.value) - 1];
+
+    const diskSize = pegs[from][pegs[from].length - 1];
+    const diskEl   = document.getElementById(`disk-${diskSize}`);
+
+    const srcStackIdx = pegs[from].length - 1;
+    const dstStackIdx = pegs[to].length;
+
+    const liftHeight    = 260;
+    const currentBottom = diskBottom(srcStackIdx);
+    const liftDelta     = liftHeight - currentBottom;
+
+    diskEl.style.transition = `transform ${duration}ms ease`;
+    diskEl.style.transform  = `translateY(-${liftDelta}px)`;
+    await wait(duration + 10);
+
+    const size   = parseInt(diskEl.dataset.size);
+    const w      = diskWidth(size, diskCount);
+    const srcX   = pegCentreX(from) - w / 2;
+    const dstX   = pegCentreX(to)   - w / 2;
+    const deltaX = dstX - srcX;
+
+    diskEl.style.transition = `transform ${duration}ms ease`;
+    diskEl.style.transform  = `translateY(-${liftDelta}px) translateX(${deltaX}px)`;
+    await wait(duration + 10);
+
+    pegs[from].pop();
+    pegs[to].push(diskSize);
+
+    const dropBottom   = diskBottom(dstStackIdx);
+    const newLiftDelta = liftHeight - dropBottom;
+
+    diskEl.style.transition = `transform ${duration}ms ease`;
+    diskEl.style.transform  = `translateY(-${newLiftDelta}px) translateX(${deltaX}px)`;
+    await wait(duration + 10);
+
+    diskEl.style.transition = 'none';
+    diskEl.style.transform  = '';
+    positionDisk(diskEl, to, dstStackIdx);
+  }
+
+  async function runAnimation() {
+    animating  = true;
+    cancelFlag = false;
+    startBtn.disabled   = true;
+    numDisksEl.disabled = true;
+
+    const totalMoves = moves.length;
+    for (let i = 0; i < totalMoves; i++) {
+      if (cancelFlag) break;
+      const { from, to } = moves[i];
+      await animateMove(from, to);
+      counter.textContent = `Move ${i + 1} of ${totalMoves}`;
+    }
+
+    if (!cancelFlag) {
+      banner.textContent = `Solved in ${totalMoves} moves!`;
+    }
+
+    animating = false;
+    startBtn.disabled   = false;
+    numDisksEl.disabled = false;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (animating) return;
+    moves = [];
+    collectMoves(diskCount, 0, 2, 1, moves);
+    counter.textContent = `Move 0 of ${moves.length}`;
+    banner.textContent  = '';
+    runAnimation();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    cancelFlag = true;
+    animating  = false;
+    setTimeout(() => {
+      startBtn.disabled   = false;
+      numDisksEl.disabled = false;
+      initBoard();
+    }, 60);
+  });
+
+  numDisksEl.addEventListener('input', () => {
+    diskValEl.textContent = numDisksEl.value;
+    if (!animating) initBoard();
+  });
+
+  speedEl.addEventListener('input', () => {
+    speedValEl.textContent = speedEl.value;
+  });
+
+  initBoard();
+</script>
+</body>
+</html>
