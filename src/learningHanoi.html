@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hanoi Solver</title>
+</head>
+<body>
+    <h1>Check the console!</h1>
+    <script>
+function collectMoves(n,from,to,list){ if (n==0){ return} const other = 3 - from - to; collectMoves(n-1,from,other,list); list.push({from,to}); collectMoves(n-1,other,to,list);}
+        // 1. Create an empty array to store moves
+const moves = [];
+// 2. Call collectMoves for 3 disks, A=0, C=2
+collectMoves(3, 0, 2, moves);
+// 3. Print each move and the total
+moves.forEach(move => {
+    console.log(Move disk from peg ${move.from} to peg ${move.to});
+});
+console.log(Total moves: ${moves.length});
+    </script>
+</body>
+</html>
