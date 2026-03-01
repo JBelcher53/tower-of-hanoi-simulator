@@ -1,4 +1,192 @@
-<!-- src/index.html -->
-<a href="learningHanoi.html">How it works (console demo)</a>
-<a href="Hanoi.html">Standard visualizer</a>
-<a href="Adj-Hanoi.html">Adjacent-only variant</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tower of Hanoi — JBelcher53</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #111;
+      --muted: #777;
+      --rule: #e5e5e5;
+      --accent: #c8401a;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      background: #fafafa;
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 80px 24px 60px;
+    }
+
+    header {
+      width: 100%;
+      max-width: 640px;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 40px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .eyebrow {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.2rem, 6vw, 3.2rem);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      margin-bottom: 16px;
+    }
+
+    .description {
+      font-size: 1rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 480px;
+    }
+
+    .cards {
+      width: 100%;
+      max-width: 640px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--rule);
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      animation: fadeUp 0.6s ease both;
+      transition: padding-left 0.2s ease;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.1s; }
+    .card:nth-child(2) { animation-delay: 0.2s; }
+    .card:nth-child(3) { animation-delay: 0.3s; }
+
+    .card:hover {
+      padding-left: 12px;
+    }
+
+    .card:hover .arrow {
+      transform: translateX(4px);
+      color: var(--accent);
+    }
+
+    .card-left { display: flex; flex-direction: column; gap: 6px; }
+
+    .card-number {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+    }
+
+    .card-desc {
+      font-size: 0.875rem;
+      color: var(--muted);
+      line-height: 1.5;
+      max-width: 420px;
+    }
+
+    .arrow {
+      font-size: 1.2rem;
+      color: var(--rule);
+      transition: transform 0.2s ease, color 0.2s ease;
+      flex-shrink: 0;
+      margin-left: 24px;
+    }
+
+    footer {
+      margin-top: 64px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <p class="eyebrow">CS Project</p>
+    <h1>Tower of Hanoi</h1>
+    <p class="description">
+      Three interactive explorations of the Tower of Hanoi puzzle — from a bare-bones logic demo to a fully animated adjacent-only variant.
+    </p>
+  </header>
+
+  <nav class="cards">
+    <a class="card" href="learningHanoi.html">
+      <div class="card-left">
+        <span class="card-number">01</span>
+        <span class="card-title">How It Works</span>
+        <span class="card-desc">A console-style walkthrough of the recursive algorithm. See every move printed step by step.</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a class="card" href="Hanoi.html">
+      <div class="card-left">
+        <span class="card-number">02</span>
+        <span class="card-title">Standard Visualizer</span>
+        <span class="card-desc">Animated solver for the classic version — move all disks from peg A to peg C.</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+
+    <a class="card" href="Adj-Hanoi.html">
+      <div class="card-left">
+        <span class="card-number">03</span>
+        <span class="card-title">Adjacent-Only Variant</span>
+        <span class="card-desc">A harder constraint — disks can only move to neighboring pegs. Requires 3ⁿ − 1 moves instead of 2ⁿ − 1.</span>
+      </div>
+      <span class="arrow">→</span>
+    </a>
+  </nav>
+
+  <footer>
+    Built by <a href="https://github.com/JBelcher53" target="_blank">JBelcher53</a>
+  </footer>
+
+</body>
+</html>
