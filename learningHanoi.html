@@ -1,38 +1,298 @@
-const pegs = [[3, 2, 1], [], []];
-let movecounter = 0;
-let selectedPeg = null;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hanoi — Play</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-function isValidMove(from, to) {
-    if (pegs[to].length === 0) {
-        return true;
-    } else if (pegs[to][pegs[to].length - 1] > pegs[from][pegs[from].length - 1]) {
-        return true;
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #fafafa;
+      color: #111;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px;
     }
-    return false;
-}
 
-function moveDisk(from, to) {
-    if (isValidMove(from, to)) {
+    a.back {
+      align-self: flex-start;
+      font-size: 0.85rem;
+      color: #777;
+      text-decoration: none;
+      margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+    a.back:hover { color: #c8401a; }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 2rem;
+      margin-bottom: 6px;
+    }
+
+    #subtitle {
+      font-size: 0.875rem;
+      color: #777;
+      margin-bottom: 32px;
+    }
+
+    #stats {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 40px;
+      font-size: 0.875rem;
+      color: #777;
+    }
+
+    #stats span { color: #111; font-weight: 500; }
+
+    #game {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .peg-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .peg-area {
+      position: relative;
+      width: 160px;
+      height: 240px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      border-radius: 8px;
+      transition: background 0.2s;
+      padding: 8px;
+      gap: 3px;
+    }
+
+    .peg-area::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 100%;
+      background: #ddd;
+      border-radius: 4px;
+      z-index: 0;
+    }
+
+    .peg-area::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 10%;
+      width: 80%;
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+    }
+
+    .peg-area.selected { background: #fff3f0; }
+    .peg-area.selected::before { background: #c8401a; }
+
+    .peg-label {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.1rem;
+      color: #777;
+    }
+
+    .peg-wrapper.selected .peg-label { color: #c8401a; }
+
+    .disk {
+      position: relative;
+      z-index: 1;
+      height: 28px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: white;
+      transition: all 0.2s;
+    }
+
+    #message {
+      font-size: 1rem;
+      color: #c8401a;
+      min-height: 1.5em;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    #controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    button {
+      padding: 10px 24px;
+      border: 1.5px solid #ddd;
+      border-radius: 6px;
+      background: white;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #111;
+    }
+
+    button:hover { border-color: #c8401a; color: #c8401a; }
+
+    #winBanner {
+      display: none;
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: #c8401a;
+      margin-bottom: 16px;
+      animation: fadeUp 0.4s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <a class="back" href="index.html">← Back to Home</a>
+  <h1>Tower of Hanoi</h1>
+  <p id="subtitle">Move all disks from peg A to peg C. Click a peg to select, click another to move.</p>
+
+  <div id="stats">
+    Moves: <span id="moveCount">0</span> &nbsp;|&nbsp; Minimum: <span id="minMoves">7</span>
+  </div>
+
+  <div id="winBanner">You solved it! 🎉</div>
+  <div id="message"></div>
+
+  <div id="game">
+    <div class="peg-wrapper" onclick="handleClick(0)">
+      <div class="peg-area" id="peg-0"></div>
+      <div class="peg-label">A</div>
+    </div>
+    <div class="peg-wrapper" onclick="handleClick(1)">
+      <div class="peg-area" id="peg-1"></div>
+      <div class="peg-label">B</div>
+    </div>
+    <div class="peg-wrapper" onclick="handleClick(2)">
+      <div class="peg-area" id="peg-2"></div>
+      <div class="peg-label">C</div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button onclick="resetGame()">↺ Reset</button>
+  </div>
+
+  <script>
+    // --- YOUR GAME LOGIC (you wrote this!) ---
+
+    let pegs = [[3, 2, 1], [], []];
+    let movecounter = 0;
+    let selectedPeg = null;
+
+    function isValidMove(from, to) {
+      if (pegs[to].length === 0) {
+        return true;
+      } else if (pegs[to][pegs[to].length - 1] > pegs[from][pegs[from].length - 1]) {
+        return true;
+      }
+      return false;
+    }
+
+    function moveDisk(from, to) {
+      if (isValidMove(from, to)) {
         const disk = pegs[from].pop();
         pegs[to].push(disk);
         movecounter += 1;
+        document.getElementById('moveCount').textContent = movecounter;
         if (isGameOver()) {
-            console.log("You Win, Good Job");
+          document.getElementById('winBanner').style.display = 'block';
+          document.getElementById('message').textContent = '';
         }
-    } else {
-        console.log("Invalid move");
+      } else {
+        document.getElementById('message').textContent = "Invalid move — can't place a larger disk on a smaller one.";
+      }
     }
-}
 
-function isGameOver() {
-    return pegs[2].length === 3;
-}
+    function isGameOver() {
+      return pegs[2].length === 3;
+    }
 
-function handleClick(pegIndex) {
-    if (selectedPeg === null) {
+    function handleClick(pegIndex) {
+      if (pegs[pegIndex].length === 0 && selectedPeg === null) {
+        document.getElementById('message').textContent = "That peg is empty!";
+        return;
+      }
+      if (selectedPeg === null) {
         selectedPeg = pegIndex;
-    } else {
+        document.getElementById('message').textContent = '';
+      } else {
         moveDisk(selectedPeg, pegIndex);
         selectedPeg = null;
+      }
+      render();
     }
-}
+
+    function resetGame() {
+      pegs = [[3, 2, 1], [], []];
+      movecounter = 0;
+      selectedPeg = null;
+      document.getElementById('moveCount').textContent = 0;
+      document.getElementById('message').textContent = '';
+      document.getElementById('winBanner').style.display = 'none';
+      render();
+    }
+
+    // --- VISUAL RENDERING ---
+
+    const COLORS = ['', '#e07b54', '#e0a854', '#54a8e0'];
+
+    function diskWidth(size) {
+      const min = 40, max = 140;
+      return min + ((size - 1) / 2) * (max - min);
+    }
+
+    function render() {
+      for (let i = 0; i < 3; i++) {
+        const pegEl = document.getElementById(`peg-${i}`);
+        pegEl.innerHTML = '';
+        pegEl.classList.toggle('selected', selectedPeg === i);
+
+        const wrapper = pegEl.closest('.peg-wrapper');
+        wrapper.classList.toggle('selected', selectedPeg === i);
+
+        pegs[i].forEach(diskSize => {
+          const div = document.createElement('div');
+          div.className = 'disk';
+          div.style.width = diskWidth(diskSize) + 'px';
+          div.style.background = COLORS[diskSize];
+          div.textContent = diskSize;
+          pegEl.prepend(div);
+        });
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>
